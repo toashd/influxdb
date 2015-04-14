@@ -855,6 +855,17 @@ func (s *Server) DataNodes() (a []*DataNode) {
 	return
 }
 
+// DropServer removes a server from the cluster
+// Curently it will drop both a broker and/or a data node
+func (s *Server) DropServer(nodeID uint64) error {
+	if nodeID == 0 {
+		return ErrServerNodeIDRequired
+	}
+	c := &dropServerCommand{NodeID: nodeID}
+	_, err := s.broadcast(dropServerMessageType, c)
+	return err
+}
+
 // CreateDataNode creates a new data node with a given URL.
 func (s *Server) CreateDataNode(u *url.URL) error {
 	c := &createDataNodeCommand{URL: u.String()}
@@ -2189,6 +2200,8 @@ func (s *Server) ExecuteQuery(q *influxql.Query, database string, user *User, ch
 				res = s.executeDropDatabaseStatement(stmt, user)
 			case *influxql.ShowDatabasesStatement:
 				res = s.executeShowDatabasesStatement(stmt, user)
+			case *influxql.DropServerStatement:
+				res = s.executeDropServerStatement(stmt, user)
 			case *influxql.ShowServersStatement:
 				res = s.executeShowServersStatement(stmt, user)
 			case *influxql.CreateUserStatement:
@@ -2464,6 +2477,10 @@ func (s *Server) executeShowDatabasesStatement(q *influxql.ShowDatabasesStatemen
 		row.Values = append(row.Values, []interface{}{name})
 	}
 	return &Result{Series: []*influxql.Row{row}}
+}
+
+func (s *Server) executeDropServerStatement(q *influxql.DropServerStatement, user *User) *Result {
+	return &Result{Err: s.DropServer(q.NodeID)}
 }
 
 func (s *Server) executeShowServersStatement(q *influxql.ShowServersStatement, user *User) *Result {
