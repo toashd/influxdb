@@ -181,7 +181,7 @@ func (s *Scanner) ScanRegex() (tok Token, pos Pos, lit string) {
 	// Start & end sentinels.
 	start, end := '/', '/'
 	// Valid escape chars.
-	escapes := map[rune]rune{'/': '/'}
+	escapes := map[rune]rune{'/': '/', '\\': '\\'}
 
 	b, err := ScanDelimited(s.r, start, end, escapes)
 
