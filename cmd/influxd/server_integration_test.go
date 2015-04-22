@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -155,6 +156,18 @@ func createCombinedNodeCluster(t *testing.T, testName, tmpDir string, nNodes int
 		})
 		t.Log(node.ClusterURL())
 
+	}
+
+	// Sanity check that we created a cluster and data nodes have unique ids
+	ids := []int{}
+	for _, n := range nodes {
+		ids = append(ids, int(n.node.DataNode.ID()))
+	}
+	sort.Ints(ids)
+	for i := 0; i < len(ids)-1; i++ {
+		if ids[i] == ids[i+1] {
+			t.Fatalf("Test %s: failed to create valid cluster: data node ID %d = %d", testName, ids[i], ids[i+1])
+		}
 	}
 
 	return nodes
